@@ -1,0 +1,21 @@
+{
+  "name": "state-mh",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^14.3.2",
+    "express": "^4.17.2",
+    "xstate": "^4.29.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
