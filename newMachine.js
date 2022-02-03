@@ -1,50 +1,74 @@
-import { createMachine, assign } from "xstate";
-
-// Action to increment the context amount
-const addWater = assign({
-  amount: (context, event) => context.amount + 1,
+const enterDetails = assign({
+  amount: (context, event) => context.details + 1,
 });
+const check = (context, event) => {
+  console.log("validation for details", event);
+  return context.details;
+};
 
-// Guard to check if the glass is full
-function glassIsFull(context, event) {
-  return context.amount >= 10;
-}
-
-const glassMachine = createMachine(
+const machine = createMachine(
   {
-    id: "glass",
-    // the initial context (extended state) of the statechart
+    id: "student",
+    initial: "idle",
     context: {
-      amount: 0,
+      details: "false",
     },
-    initial: "empty",
     states: {
-      empty: {
+      idle: {
         on: {
-          FILL: {
-            target: "filling",
-            actions: "addWater",
+          SUBMIT: {
+            target: "enrolmentKeyGenerated",
+            actions: "enterDetails",
           },
         },
       },
-      filling: {
-        // Transient transition
-        always: {
-          target: "full",
-          cond: "glassIsFull",
-        },
+      enrolmentKeyGenerated: {
         on: {
-          FILL: {
-            target: "filling",
-            actions: "addWater",
+          SUBMIT: {
+            target: "basicDetailsEntered",
+            cond: "check",
           },
         },
       },
-      full: {},
+      basicDetailsEntered: {
+        on: {
+          SUBMIT: "pendingEnglishInterview",
+        },
+      },
+      pendingEnglishInterview: {
+        on: {
+          SUBMIT: "pendingAlgebraInterview",
+        },
+      },
+      pendingAlgebraInterview: {
+        on: {
+          SUBMIT: "pendingCultureFitInterview",
+        },
+      },
+      pendingCultureFitInterview: {
+        on: {
+          SUBMIT: "pendingCultureFitReinterview",
+        },
+      },
+      pendingCultureFitReinterview: {
+        on: {
+          SUBMIT: "finallyJoined",
+        },
+      },
+      finallyJoined: {
+        type: "final",
+      },
     },
   },
   {
-    actions: { addWater },
-    guards: { glassIsFull },
+    actions: { enterDetails },
+    guards: { check },
   }
 );
+
+let currentState = machine.initialState;
+console.log("Intial state: " + currentState.value);
+
+let newsate = machine.transition(currentState, "SUBMIT").value;
+
+console.log("new State value::::::\n", newsate);

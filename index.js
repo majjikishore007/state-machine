@@ -1,86 +1,83 @@
 import express from "express";
 import { toggleMachine, lightMachine } from "./state.js";
-import { interpret } from "xstate";
-import { createMachine } from "xstate";
+import { actions, interpret } from "xstate";
+import { createMachine, assign } from "xstate";
 const app = express();
 
-//creting a machine
-/**
- * ENROLLMENT KEY GENERATED
-
-BASIC DETAILS ENTERED
-
-TEST FAILED (OR) ENGLIS INTERVIEW PENDING
-
- ENGLISH INTERVIEW FAILED (OR) ALGEBRA INTERVIEW PENDING
-
-ALGEBRA INTERVIEW FAILED (OR) CULTURE INTERVIEW PENDING
-
-CULTURE INTERVIEW FAILED OR SELECTED AND JOINED AWAITED
-
-OFFER LETTER SENT 
-pending parents conversation(optional)
-
-pending travel plans(optional)
-
-finalized travel plans(optional)
-  
-joined
- */
-const machine = createMachine({
-  id: "student",
-  initial: "idle",
-  states: {
-    idle: {
-      on: {
-        SUBMIT:"enrolmentKeyGenerated"
-      },
-    },
-    enrolmentKeyGenerated: {
-      on: {
-        SUBMIT: "basicDetailsEntered"
-      },
-    },
-    basicDetailsEntered: {
-      on: {
-        SUBMIT: "pendingEnglishInterview"
-      },
-    },
-    pendingEnglishInterview: {
-      on: {
-        SUBMIT: "pendingAlgebraInterview"
-      },
-    }, pendingAlgebraInterview: {
-      on: {
-        SUBMIT: "pendingCultureFitInterview"
-      },
-    }, pendingCultureFitInterview: {
-      on: {
-        SUBMIT: "pendingCultureFitReinterview"
-      },
-    }, pendingCultureFitReinterview: {
-      on: {
-        SUBMIT:"finallyJoined"
-      }, 
-    },
-    finallyJoined: {
-   type: 'final'
- }
+const enterDetails = assign({
+  details: (context, event) => {
+    console.log("giving test");
+    context.details.name = "majji";
+    context.details.password = "majji";
   },
 });
-const tooglemac = interpret(machine)
-  .onTransition((state) => console.log(state.value))
-  .start();
+const giveTest = assign({
+  details: (context, event) => {
+    context.details.marks = 70;
+  },
+});
+const check = (context, event) => {
+  return context.marks >= 50;
+};
+const studentMachine = createMachine(
+  {
+    id: "student",
+    initial: "idle",
+    context: {
+      details: {
+        name: "",
+        password: "",
+        marks: 0,
+      },
+    },
+    states: {
+      idle: {
+        on: {
+          KEY_GEN: {
+            target: "enrolmentKeyGenerated",
+            actions: [enterDetails],
+          },
+        },
+      },
+      enrolmentKeyGenerated: {
+        on: {
+          ENTER_DETAILS: {
+            target: "basicDetailsEntered",
+            actions: [giveTest],
+          },
+        },
+      },
+      basicDetailsEntered: {
+        always: {
+          target: "pendingEnglishInterview",
+          cond: check,
+        },
+        on: {
+          INTERVIEW: {
+            target: "testFailed",
+          },
+        },
+      },
+      pendingEnglishInterview: {},
+      testFailed: {
+        on: {
+          INTERVIEW: {
+            target: "pendingEnglishInterview",
+          },
+        },
+      },
+    },
+  },
+  {
+    actions: { enterDetails, giveTest },
+    guards: { check },
+  }
+);
 
+let initialState = "basicDetailsEntered";
+let newstate = studentMachine.transition(initialState, "ENTER_DETAILS");
 
-let currentState = machine.initialState;
-console.log("Intial state: " + currentState.value);
-let newsate = machine.transition(currentState, "SUBMIT").value
-
-
-console.log("new State value::::::\n",newsate);
-
-
+console.log("initialState: " + newstate.value);
 
 
 
